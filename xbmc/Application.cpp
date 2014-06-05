@@ -3504,11 +3504,18 @@ bool CApplication::Cleanup()
   }
 }
 
+void CApplication::SetExitCode(int exitCode)
+{
+  // save it for CEC
+  m_ExitCode = exitCode;
+  m_ExitCodeSet = true;
+}
+
 void CApplication::Stop(int exitCode)
 {
   try
   {
-    CVariant vExitCode(exitCode);
+    CVariant vExitCode(m_ExitCode);
     CAnnouncementManager::Announce(System, "xbmc", "OnQuit", vExitCode);
 
     SaveFileState(true);
@@ -3532,7 +3539,6 @@ void CApplication::Stop(int exitCode)
 
     m_bStop = true;
     m_AppFocused = false;
-    m_ExitCode = exitCode;
     CLog::Log(LOGNOTICE, "stop all");
 
     // cancel any jobs from the jobmanager
