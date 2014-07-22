@@ -18,6 +18,7 @@
  *
  */
 
+#include "system.h"
 #include "CPUInfo.h"
 #include "Temperature.h"
 #include <string>
@@ -89,6 +90,10 @@
 #include "log.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/StringUtils.h"
+
+#ifdef HAS_LIBAMCODEC
+#include "utils/AMLUtils.h"
+#endif
 
 using namespace std;
 
@@ -241,6 +246,10 @@ CCPUInfo::CCPUInfo(void)
     m_fProcTemperature = fopen("/sys/class/hwmon/hwmon0/temp1_input", "r");
   if (m_fProcTemperature == NULL)   
     m_fProcTemperature = fopen("/sys/class/thermal/thermal_zone0/temp", "r");  // On Raspberry PIs
+#ifdef HAS_LIBAMCODEC
+  if (m_fProcTemperature == NULL)
+    m_fProcTemperature = fopen("/sys/class/saradc/temperature", "r");
+#endif
 
   m_fCPUFreq = fopen ("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq", "r");
 
@@ -549,7 +558,10 @@ bool CCPUInfo::getTemperature(CTemperature& temperature)
     if (!ret)
     {
       ret = fscanf(m_fProcTemperature, "%d", &value);
-      value = value / 1000;
+#ifndef HAS_LIBAMCODEC
+      if (!aml_present())
+        value = value / 1000;
+#endif
       scale = 'c';
       ret++;
     }
