@@ -159,6 +159,10 @@ bool CEGLNativeTypeAmlogic::SetNativeResolution(const RESOLUTION_INFO &res)
           else
             SetDisplayResolution("1080p");
           break;
+        case 720:
+          if (!IsHdmiConnected())
+            SetDisplayResolution("480cvbs");
+          break;
       }
       break;
     case 50:
@@ -173,6 +177,10 @@ bool CEGLNativeTypeAmlogic::SetNativeResolution(const RESOLUTION_INFO &res)
             SetDisplayResolution("1080i50hz");
           else
             SetDisplayResolution("1080p50hz");
+          break;
+        case 720:
+          if (!IsHdmiConnected())
+            SetDisplayResolution("576cvbs");
           break;
       }
       break;
@@ -189,10 +197,18 @@ bool CEGLNativeTypeAmlogic::SetNativeResolution(const RESOLUTION_INFO &res)
 
 bool CEGLNativeTypeAmlogic::ProbeResolutions(std::vector<RESOLUTION_INFO> &resolutions)
 {
-  char valstr[256] = {0};
-  aml_get_sysfs_str("/sys/class/amhdmitx/amhdmitx0/disp_cap", valstr, 255);
   std::vector<CStdString> probe_str;
-  StringUtils::SplitString(valstr, "\n", probe_str);
+  if (IsHdmiConnected())
+  {
+    char valstr[256] = {0};
+    aml_get_sysfs_str("/sys/class/amhdmitx/amhdmitx0/disp_cap", valstr, 255);
+    StringUtils::SplitString(valstr, "\n", probe_str);
+  }
+  else
+  {
+    probe_str.push_back("480cvbs");
+    probe_str.push_back("576cvbs");
+  }
 
   resolutions.clear();
   RESOLUTION_INFO res;
@@ -210,8 +226,11 @@ bool CEGLNativeTypeAmlogic::GetPreferredResolution(RESOLUTION_INFO *res) const
   // check display/mode, it gets defaulted at boot
   if (!GetNativeResolution(res))
   {
-    // punt to 720p if we get nothing
-    ModeToResolution("720p", res);
+    // punt to 720p or 576cvbs if we get nothing
+    if (IsHdmiConnected())
+      ModeToResolution("720p", res);
+    else
+      ModeToResolution("576cvbs", res);
   }
 
   return true;
@@ -257,7 +276,25 @@ bool CEGLNativeTypeAmlogic::ModeToResolution(const char *mode, RESOLUTION_INFO *
   if (StringUtils::EndsWith(fromMode, "*"))
     fromMode.erase(fromMode.size() - 1);
 
-  if (fromMode.Equals("720p"))
+  if (fromMode.Equals("480cvbs"))
+  {
+    res->iWidth = 720;
+    res->iHeight= 480;
+    res->iScreenWidth = 720;
+    res->iScreenHeight= 480;
+    res->fRefreshRate = 60;
+    res->dwFlags = D3DPRESENTFLAG_INTERLACED;
+  }
+  else if (fromMode.Equals("576cvbs"))
+  {
+    res->iWidth = 720;
+    res->iHeight= 576;
+    res->iScreenWidth = 720;
+    res->iScreenHeight= 576;
+    res->fRefreshRate = 50;
+    res->dwFlags = D3DPRESENTFLAG_INTERLACED;
+  }
+  else if (fromMode.Equals("720p"))
   {
     res->iWidth = 1280;
     res->iHeight= 720;
@@ -429,4 +466,11 @@ void CEGLNativeTypeAmlogic::SetFramebufferResolution(int width, int height) cons
     }
     close(fd0);
   }
+}
+
+bool CEGLNativeTypeAmlogic::IsHdmiConnected() const
+{
+  char hpd_state[2] = {0};
+  aml_get_sysfs_str("/sys/class/amhdmitx/amhdmitx0/hpd_state", hpd_state, 2);
+  return hpd_state[0] == '1';
 }
