@@ -305,6 +305,27 @@ bool CAESinkALSA::InitializeHW(const ALSAConfig &inconfig, ALSAConfig &outconfig
 
   unsigned int sampleRate   = inconfig.sampleRate;
   unsigned int channelCount = inconfig.channels;
+
+#ifdef HAS_LIBAMCODEC
+  // Change the sample rates that are supported by ALSA but unsupported by HDMI to the closest supported value
+  switch (sampleRate)
+  {
+  case 5512:
+  case 8000:
+  case 11025:
+  case 16000:
+  case 22050:
+    sampleRate = 44100;
+    break;
+  case 64000:
+    sampleRate = 88200;
+    break;
+  case 384000:
+    sampleRate = 192000;
+    break;
+  }
+#endif
+
   snd_pcm_hw_params_set_rate_near    (m_pcm, hw_params, &sampleRate, NULL);
   snd_pcm_hw_params_set_channels_near(m_pcm, hw_params, &channelCount);
 
