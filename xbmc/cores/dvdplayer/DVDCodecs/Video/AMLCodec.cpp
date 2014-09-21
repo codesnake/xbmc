@@ -1563,10 +1563,7 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints)
     case VFORMAT_H264:
     case VFORMAT_H264MVC:
       am_private->gcodec.format = VIDEO_DEC_FORMAT_H264;
-      am_private->gcodec.param  = (void*)EXTERNAL_PTS;
-      // h264 in an avi file
-      if (m_hints.ptsinvalid)
-        am_private->gcodec.param = (void*)(EXTERNAL_PTS | SYNC_OUTSIDE);
+      am_private->gcodec.param  = (void*)(EXTERNAL_PTS | SYNC_OUTSIDE);
       break;
     case VFORMAT_REAL:
       am_private->stream_type = AM_STREAM_RM;
