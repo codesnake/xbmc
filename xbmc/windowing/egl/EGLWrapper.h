@@ -72,4 +72,5 @@ private:
 
   CEGLNativeType *m_nativeTypes;
   EGLint         m_result;
+  bool           m_vsync;
 };

@@ -374,6 +374,7 @@ bool CEGLWrapper::SetVSync(EGLDisplay display, bool enable)
   // might fail so let caller decide if this is an error.
   status = eglSwapInterval(display, enable ? 1 : 0);
   CheckError();
+  m_vsync = (enable && m_result == EGL_SUCCESS);
   return status;
 }
 
@@ -381,6 +382,8 @@ void CEGLWrapper::SwapBuffers(EGLDisplay display, EGLSurface surface)
 {
   if ((display == EGL_NO_DISPLAY) || (surface == EGL_NO_SURFACE))
     return;
+  if (m_vsync)
+    m_nativeTypes->WaitVSync();
   eglSwapBuffers(display, surface);
 }
 
