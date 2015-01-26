@@ -43,10 +43,16 @@ CEGLNativeTypeAmlogic::CEGLNativeTypeAmlogic()
     m_framebuffer_name = framebuffer.substr(start);
   }
   m_nativeWindow = NULL;
+
+  std::string framebuffer = "/dev/" + m_framebuffer_name;
+  m_framebuffer_fd = open(framebuffer.c_str(), O_RDWR);
 }
 
 CEGLNativeTypeAmlogic::~CEGLNativeTypeAmlogic()
 {
+  if (m_framebuffer_fd >= 0) {
+    close(m_framebuffer_fd);
+  }
 }
 
 bool CEGLNativeTypeAmlogic::CheckCompatibility()
@@ -290,15 +296,14 @@ void CEGLNativeTypeAmlogic::SetFramebufferResolution(const RESOLUTION_INFO &res)
   SetFramebufferResolution(res.iScreenWidth, res.iScreenHeight);
 }
 
+
 void CEGLNativeTypeAmlogic::SetFramebufferResolution(int width, int height) const
 {
-  int fd0;
-  std::string framebuffer = "/dev/" + m_framebuffer_name;
-
-  if ((fd0 = open(framebuffer.c_str(), O_RDWR)) >= 0)
+  // revert display axis
+  if (m_framebuffer_fd >= 0)
   {
     struct fb_var_screeninfo vinfo;
-    if (ioctl(fd0, FBIOGET_VSCREENINFO, &vinfo) == 0)
+    if (ioctl(m_framebuffer_fd, FBIOGET_VSCREENINFO, &vinfo) == 0)
     {
       vinfo.xres = width;
       vinfo.yres = height;
@@ -306,9 +311,8 @@ void CEGLNativeTypeAmlogic::SetFramebufferResolution(int width, int height) cons
       vinfo.yres_virtual = 2160;
       vinfo.bits_per_pixel = 32;
       vinfo.activate = FB_ACTIVATE_ALL;
-      ioctl(fd0, FBIOPUT_VSCREENINFO, &vinfo);
+      ioctl(m_framebuffer_fd, FBIOPUT_VSCREENINFO, &vinfo);
     }
-    close(fd0);
   }
 }
 
@@ -317,4 +321,10 @@ bool CEGLNativeTypeAmlogic::IsHdmiConnected() const
   char hpd_state[2] = {0};
   aml_get_sysfs_str("/sys/class/amhdmitx/amhdmitx0/hpd_state", hpd_state, 2);
   return hpd_state[0] == '1';
+}
+
+void CEGLNativeTypeAmlogic::WaitVSync()
+{
+  int arg = 0;
+  ioctl(m_framebuffer_fd, FBIO_WAITFORVSYNC, &arg);
 }
