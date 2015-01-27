@@ -146,6 +146,12 @@ public:
     framebuffer */
   virtual bool  ShowWindow(bool show) = 0;
 
+/*! \brief Waits for VSYNC, if possible
+
+    This call is there to wait until a VSYNC event happens, so that buffers
+    can be swapped without tearing, if the kernel driver implements it */
+  virtual void  WaitVSync() {};
+
 protected:
   XBNativeDisplayType  m_nativeDisplay;
   XBNativeWindowType   m_nativeWindow;

@@ -46,6 +46,7 @@ public:
   virtual bool  GetPreferredResolution(RESOLUTION_INFO *res) const;
 
   virtual bool  ShowWindow(bool show);
+  virtual void  WaitVSync();
 
 protected:
   bool SetDisplayResolution(const char *resolution);
@@ -58,4 +59,5 @@ private:
   bool IsHdmiConnected() const;
 
   std::string m_framebuffer_name;
+  int         m_framebuffer_fd;
 };
