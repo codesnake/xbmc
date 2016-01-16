@@ -1956,7 +1956,7 @@ void CAMLCodec::Process()
         m_cur_pictcnt++;
         m_ready_event.Set();
 
-        // correct video pts by starting pts.
+/*        // correct video pts by starting pts.
         if (m_start_pts != 0)
           pts_video += m_start_pts;
         else if (m_start_dts != 0)
@@ -1988,6 +1988,7 @@ void CAMLCodec::Process()
             SetVideoPtsSeconds((double)pts_video/PTS_FREQ + error/4);
           }
         }
+*/
       }
     }
     else
@@ -2001,16 +2002,8 @@ void CAMLCodec::Process()
 
 double CAMLCodec::GetPlayerPtsSeconds()
 {
-  double clock_pts = 0.0;
-  if (m_clock)
-    clock_pts = m_clock->GetInterpolatedClock() / DVD_TIME_BASE;
-  else
-  {
-    CLog::Log(LOGWARNING, "CAMLCodec::GetPlayerPtsSeconds: cannot get player clock");
-    clock_pts = CDVDClock::GetAbsoluteClock() / DVD_TIME_BASE;
-  }
+  return (double)get_pts_video() / PTS_FREQ;
 
-  return clock_pts;
 }
 
 void CAMLCodec::SetVideoPtsSeconds(const double pts)

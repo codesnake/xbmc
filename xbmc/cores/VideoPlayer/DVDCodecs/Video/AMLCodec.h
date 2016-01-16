@@ -49,13 +49,13 @@ public:
   int           GetDataSize();
   double        GetTimeSize();
   void          SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
+  void          SetVideoPtsSeconds(double pts);
 
 protected:
   virtual void  Process();
 
 private:
   double        GetPlayerPtsSeconds();
-  void          SetVideoPtsSeconds(double pts);
   void          ShowMainVideo(const bool show);
   void          SetVideoZoom(const float zoom);
   void          SetVideoContrast(const int contrast);

@@ -49,6 +49,7 @@ CDVDVideoCodecAmlogic::CDVDVideoCodecAmlogic(IVPClockCallback* clock) :
   m_framerate(0.0),
   m_video_rate(0),
   m_mpeg2_sequence(NULL),
+  m_dropState(false),
   m_bitparser(NULL),
   m_bitstream(NULL)
 {
@@ -264,6 +265,15 @@ int CDVDVideoCodecAmlogic::Decode(uint8_t *pData, int iSize, double dts, double 
     FrameRateTracking( pData, iSize, dts, pts);
   }
 
+  // we should flush everything we have
+  if (!pData && iSize == 0)
+  {
+    if (m_Codec)
+      m_Codec->SetVideoPtsSeconds(m_last_pts);
+
+    return 0;
+  }
+
   if (!m_opened)
   {
     if (m_Codec && !m_Codec->OpenDecoder(m_hints))
@@ -289,7 +299,17 @@ void CDVDVideoCodecAmlogic::Reset(void)
 bool CDVDVideoCodecAmlogic::GetPicture(DVDVideoPicture* pDvdVideoPicture)
 {
   if (m_Codec)
-    m_Codec->GetPicture(&m_videobuffer);
+  {
+    if (m_dropState)
+    {
+      pDvdVideoPicture->iFlags |= DVP_FLAG_DROPPED;
+      // init decoder dropping by setting pts to current value
+      m_Codec->SetVideoPtsSeconds(m_last_pts / DVD_TIME_BASE);
+    }
+    else
+      m_Codec->GetPicture(&m_videobuffer);
+  }
+
   *pDvdVideoPicture = m_videobuffer;
 
   CDVDAmlogicInfo* info = new CDVDAmlogicInfo(this, m_Codec);
@@ -328,6 +348,8 @@ bool CDVDVideoCodecAmlogic::ClearPicture(DVDVideoPicture *pDvdVideoPicture)
 
 void CDVDVideoCodecAmlogic::SetDropState(bool bDrop)
 {
+  CLog::Log(LOGDEBUG, "CDVDVideoCodecAmlogic::SetDropState: bDrop(%d)", bDrop ? 1 : 0);
+  m_dropState = bDrop;
 }
 
 void CDVDVideoCodecAmlogic::SetSpeed(int iSpeed)
