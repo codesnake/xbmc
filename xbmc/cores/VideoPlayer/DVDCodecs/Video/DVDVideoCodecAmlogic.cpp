@@ -279,10 +279,7 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
     goto FAIL;
   }
 
-  // allocate a dummy VideoPicture buffer.
-  // first make sure all properties are reset.
-  memset(&m_videobuffer, 0, sizeof(VideoPicture));
-
+  // initialize a dummy VideoPicture buffer
   m_videobuffer.dts = DVD_NOPTS_VALUE;
   m_videobuffer.pts = DVD_NOPTS_VALUE;
   m_videobuffer.color_range  = 0;
